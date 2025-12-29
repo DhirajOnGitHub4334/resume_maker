@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "781128513492",
+    "project_id": "resumemaker-a298f",
+    "storage_bucket": "resumemaker-a298f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:781128513492:android:6b50ad159c8c40f9b58841",
+        "android_client_info": {
+          "package_name": "com.dw.resume_maker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXNuypPE_3i0nKCRu1E-pQ6zu8NVnkRKk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

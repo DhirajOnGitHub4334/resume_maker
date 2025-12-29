@@ -1,0 +1,777 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:path_provider/path_provider.dart' as path;
+import 'package:resume_maker/Widget/logger.dart';
+
+import '../Services/create_pdf.dart';
+import '../Utility/app_color.dart';
+import '../Utility/utils.dart';
+
+class CreateResumeController extends GetxController {
+  final mobileFormKey = GlobalKey<FormState>();
+  final emailFormKey = GlobalKey<FormState>();
+  final pincodeFormKey = GlobalKey<FormState>();
+
+  //Personal Data Controller
+  final firstNameController = TextEditingController().obs;
+  final lastNameController = TextEditingController().obs;
+  final addressController = TextEditingController().obs;
+  final userCountryController = TextEditingController().obs;
+  final mobileController = TextEditingController().obs;
+  final emailController = TextEditingController().obs;
+  final pincodeController = TextEditingController().obs;
+
+  final continueCount = 0.obs;
+  final proficiencyCount = 0.obs;
+  final langProCount = 0.obs;
+  final isFinalSubmit = false.obs;
+
+  //Summary var
+  final summaryController = TextEditingController().obs;
+
+  //Skill var
+  final skillController = TextEditingController().obs;
+
+  //Langauge
+  final languageController = TextEditingController().obs;
+
+  //Social Site
+  final socialTextController = TextEditingController().obs;
+
+  //Job Details Data
+  final jobTitleController = TextEditingController().obs;
+  final employerController = TextEditingController().obs;
+  final employerCityController = TextEditingController().obs;
+  final countryController = TextEditingController().obs;
+  final detailsController = TextEditingController().obs;
+  final fromDate = Rx<DateTime?>(null);
+  final toDate = Rx<DateTime?>(null);
+
+  //Education Details Data
+  final degreeController = TextEditingController().obs;
+  final univercityController = TextEditingController().obs;
+  final placeController = TextEditingController().obs;
+  final startDate = Rx<DateTime?>(null);
+  final endDate = Rx<DateTime?>(null);
+
+  //Project Details
+  final projectNameController = TextEditingController().obs;
+  final durationController = TextEditingController().obs;
+  final environmentController = TextEditingController().obs;
+  final overviewController = TextEditingController().obs;
+  final fetureController = TextEditingController().obs;
+  final rulesController = TextEditingController().obs;
+
+  // List
+  final skillsList = <Map<String, dynamic>>[].obs;
+  final jobList = <Map<String, dynamic>>[].obs;
+  final educationList = <Map<String, dynamic>>[].obs;
+  final languageList = <Map<String, dynamic>>[].obs;
+  final socialDataList = <String>[].obs;
+  final projectList = <Map<String, dynamic>>[].obs;
+
+  final isLoading = false.obs;
+
+  //Color Selection ON Review
+  final selectedColor = AppColors.blue.obs;
+
+  final isRedClick = false.obs;
+  final isPinkClick = false.obs;
+  final isPurpleClick = false.obs;
+  final isYellowClick = false.obs;
+  final isGreenClick = false.obs;
+  final isGreyClick = false.obs;
+  final isBlueClick = false.obs;
+  final isOrangeClick = false.obs;
+
+  //selected Template
+  final selectedTempIndex = Rxn<int>();
+
+  @override
+  void dispose() {
+    //First Page Controller
+    firstNameController.value.clear();
+    lastNameController.value.clear();
+    addressController.value.clear();
+    userCountryController.value.clear();
+    mobileController.value.clear();
+    emailController.value.clear();
+    pincodeController.value.clear();
+
+    //Summay Controller
+    summaryController.value.clear();
+
+    //langauge
+    languageController.value.clear();
+
+    //social Controller
+    socialTextController.value.clear();
+
+    // Job Controller
+    jobTitleController.value.clear();
+    employerController.value.clear();
+    employerCityController.value.clear();
+    countryController.value.clear();
+    detailsController.value.clear();
+
+    // Education Controller
+    degreeController.value.clear();
+    univercityController.value.clear();
+    placeController.value.clear();
+
+    //project Controller
+    projectNameController.value.clear();
+    durationController.value.clear();
+    environmentController.value.clear();
+    overviewController.value.clear();
+    fetureController.value.clear();
+    rulesController.value.clear();
+    super.dispose();
+  }
+
+  // Click On Continue
+  void clickOnContinue() {
+    final selectedIndex = selectedTempIndex.value;
+
+    if (selectedIndex == null) {
+      initialContinueClick();
+    } else {
+      firstContinueClick();
+    }
+  }
+
+  //Click ON Back
+  void clickOnBack() {
+    if (continueCount > 0) {
+      continueCount.value--;
+    }
+  }
+
+  //Skill Proficiency
+  void addProficiency(int index) {
+    proficiencyCount.value = index;
+  }
+
+  //Skill Proficiency
+  void addLangProficiency(int index) {
+    langProCount.value = index;
+  }
+
+  //Add Skill List Data
+  void clickOnSkillAdd() {
+    if (skillController.value.text.isEmpty) {
+      commonDialog("Please Enter valid Data");
+      return;
+    }
+
+    final param = {
+      "skill": skillController.value.text.trim(),
+      "proficiency": proficiencyCount.value,
+    };
+    skillsList.add(param);
+
+    skillController.value.clear();
+    proficiencyCount.value = 0;
+  }
+
+  //Add Langauge List Data
+  void clickOnLangAdd() {
+    if (languageController.value.text.isEmpty) {
+      commonDialog("Please Enter valid Data");
+      return;
+    }
+
+    final param = {
+      "lang": languageController.value.text,
+      "proficiency": langProCount.value,
+    };
+    languageList.add(param);
+
+    languageController.value.clear();
+    langProCount.value = 0;
+  }
+
+  bool forInitialCount() {
+    if (firstNameController.value.text.isEmpty) {
+      commonDialog("Please enter first Name.");
+      return false;
+    }
+
+    if (lastNameController.value.text.isEmpty) {
+      commonDialog("Please enter Last Name.");
+      return false;
+    }
+
+    if (addressController.value.text.isEmpty) {
+      commonDialog("Please enter Address.");
+      return false;
+    }
+
+    if (pincodeController.value.text.isEmpty) {
+      commonDialog("Please enter Pincode.");
+      return false;
+    }
+
+    if (mobileController.value.text.isEmpty) {
+      commonDialog("Please enter Mobile Number");
+      return false;
+    }
+
+    if (emailController.value.text.isEmpty) {
+      commonDialog("Please enter Email ID");
+      return false;
+    }
+
+    return true;
+  }
+
+  bool forSummaryCount() {
+    if (summaryController.value.text.isEmpty) {
+      commonDialog("Please enter Summary");
+      return false;
+    }
+    return true;
+  }
+
+  bool forSkillCount() {
+    if (skillsList.isEmpty) {
+      commonDialog("Please enter at least one Skill");
+      return false;
+    }
+    return true;
+  }
+
+  bool forProjectCount() {
+    if (projectList.isEmpty) {
+      commonDialog("Please enter at least one Project");
+      return false;
+    }
+    return true;
+  }
+
+  bool forJobCount() {
+    if (jobList.isEmpty) {
+      commonDialog("Please enter Experience");
+      return false;
+    }
+
+    return true;
+  }
+
+  bool forEducationCount() {
+    if (educationList.isEmpty) {
+      commonDialog("Please enter Eduction");
+      return false;
+    }
+
+    return true;
+  }
+
+  bool forLangCount() {
+    if (languageList.isEmpty) {
+      commonDialog("Please enter at least one known Language");
+      return false;
+    }
+    return true;
+  }
+
+  bool forSocialCount() {
+    if (socialDataList.isEmpty) {
+      commonDialog("Please enter at least one Social Side");
+      return false;
+    }
+    return true;
+  }
+
+  //from Date
+  void fromDateCalender(BuildContext context) async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      firstDate: DateTime(1991),
+      lastDate: now,
+      initialDate: now,
+    );
+
+    if (pickedDate != null) {
+      fromDate.value = pickedDate;
+    }
+  }
+
+  //TO Date
+  void toDateCalender(BuildContext context) async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      firstDate: DateTime(1991),
+      lastDate: now,
+      initialDate: now,
+    );
+
+    if (pickedDate != null) {
+      toDate.value = pickedDate;
+    }
+  }
+
+  //Add Experience List Data
+  void clickOnJobAdd() {
+    if (jobTitleController.value.text.isEmpty) {
+      commonDialog("Please Enter job title");
+      return;
+    }
+
+    if (employerController.value.text.isEmpty) {
+      commonDialog("Please Enter employer Name");
+      return;
+    }
+
+    if (employerCityController.value.text.isEmpty) {
+      commonDialog("Please Enter job location");
+      return;
+    }
+
+    if (fromDate.value == null) {
+      commonDialog("Please Enter job starting Date");
+      return;
+    }
+
+    if (toDate.value == null) {
+      commonDialog("Please Enter job ending Date");
+      return;
+    }
+
+    final param = {
+      "jobtitle": jobTitleController.value.text.trim(),
+      "employerName": employerController.value.text.trim(),
+      "city": employerCityController.value.text.trim(),
+      "details": detailsController.value.text.trim(),
+      "fromDate": fromDate.value,
+      "toDate": toDate.value,
+    };
+
+    jobList.add(param);
+
+    jobTitleController.value.clear();
+    employerController.value.clear();
+    employerCityController.value.clear();
+    detailsController.value.clear();
+    fromDate.value = null;
+    toDate.value = null;
+  }
+
+  //Add Experience List Data
+  void clickOnEducationAdd() {
+    if (degreeController.value.text.isEmpty) {
+      commonDialog("Please Enter Degree");
+      return;
+    }
+
+    if (univercityController.value.text.isEmpty) {
+      commonDialog("Please Enter university or school name");
+      return;
+    }
+
+    if (placeController.value.text.isEmpty) {
+      commonDialog("Please Enter location");
+      return;
+    }
+
+    if (startDate.value == null) {
+      commonDialog("Please Enter job starting Date");
+      return;
+    }
+
+    if (endDate.value == null) {
+      commonDialog("Please Enter job ending Date");
+      return;
+    }
+
+    final param = {
+      "degree": degreeController.value.text.trim(),
+      "university": univercityController.value.text.trim(),
+      "city": placeController.value.text.trim(),
+      "startDate": startDate.value,
+      "endDate": endDate.value,
+    };
+
+    educationList.add(param);
+
+    degreeController.value.clear();
+    univercityController.value.clear();
+    placeController.value.clear();
+    startDate.value = null;
+    endDate.value = null;
+  }
+
+  //Add Social Media List Data
+  void clickOnSocialMediaAdd() {
+    if (socialTextController.value.text.isEmpty) {
+      commonDialog("Please Enter valid Data");
+      return;
+    }
+
+    socialDataList.add(socialTextController.value.text.trim());
+
+    socialTextController.value.clear();
+  }
+
+  //Start Date
+  void startDateCalender(BuildContext context) async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      firstDate: DateTime(1991),
+      lastDate: now,
+      initialDate: now,
+    );
+
+    if (pickedDate != null) {
+      startDate.value = pickedDate;
+    }
+  }
+
+  //End Date
+  void endDateCalender(BuildContext context) async {
+    final now = DateTime.now();
+
+    final pickedDate = await showDatePicker(
+      context: context,
+      firstDate: DateTime(1991),
+      lastDate: now,
+      initialDate: now,
+    );
+
+    if (pickedDate != null) {
+      endDate.value = pickedDate;
+    }
+  }
+
+  //Add Project List Data
+  void clickOnProjectAdd() {
+    if (projectNameController.value.text.isEmpty) {
+      commonDialog("Please Enter Project Name");
+      return;
+    }
+
+    if (durationController.value.text.isEmpty) {
+      commonDialog("Please Enter duration of Project");
+      return;
+    }
+
+    if (environmentController.value.text.isEmpty) {
+      commonDialog("Please Enter Used Technology");
+      return;
+    }
+
+    if (overviewController.value.text.isEmpty) {
+      commonDialog("Please Enter at least one overview.");
+      return;
+    }
+
+    if (fetureController.value.text.isEmpty) {
+      commonDialog("Please Enter at least one feature");
+      return;
+    }
+
+    if (rulesController.value.text.isEmpty) {
+      commonDialog("Please Enter at least one Responsibility");
+      return;
+    }
+
+    final param = {
+      "projectName": projectNameController.value.text.trim(),
+      "duration": durationController.value.text.trim(),
+      "technology": environmentController.value.text.trim(),
+      "overview": overviewController.value.text.trim(),
+      "feature": fetureController.value.text.trim(),
+      "rules": rulesController.value.text.trim(),
+    };
+
+    projectList.add(param);
+
+    projectNameController.value.clear();
+    durationController.value.clear();
+    environmentController.value.clear();
+    overviewController.value.clear();
+    fetureController.value.clear();
+    rulesController.value.clear();
+  }
+
+  String proficiencyFromCount(int count) {
+    switch (count) {
+      case 0:
+      case 1:
+        return "Novice";
+
+      case 2:
+        return "Advanced Beginner";
+
+      case 3:
+        return "Competent";
+
+      case 4:
+        return "Proficient";
+
+      case 5:
+        return "Expert";
+
+      default:
+        return "";
+    }
+  }
+
+  void createPdf() async {
+    try {
+      isLoading.value = true;
+
+      final pdfBytes = await createBiodataPdf(this);
+
+      if (kIsWeb) {
+        // WEB: Direct download
+        await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Resume',
+          fileName: 'Resume.pdf',
+          bytes: pdfBytes,
+        );
+      } else {
+        // MOBILE: Use temp directory
+        final tempDir = await path.getTemporaryDirectory();
+        final file = File("${tempDir.path}/resume.pdf");
+        await file.writeAsBytes(pdfBytes);
+
+        await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Resume',
+          fileName: 'Resume.pdf',
+          bytes: await file.readAsBytes(),
+        );
+
+        await file.delete();
+      }
+    } catch (e) {
+      Logger.logData("Something went wrong: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  //Selection of Red
+  void selectionOfRed() {
+    isRedClick.value = true;
+    selectedColor.value = AppColors.red;
+    //Remaining
+    isPinkClick.value = false;
+    isPurpleClick.value = false;
+    isYellowClick.value = false;
+    isGreenClick.value = false;
+    isGreyClick.value = false;
+    isBlueClick.value = false;
+    isOrangeClick.value = false;
+  }
+
+  //Selection of Pink
+  void selectionOfPink() {
+    isPinkClick.value = true;
+    selectedColor.value = AppColors.pink;
+    //Remaining
+    isRedClick.value = false;
+    isPurpleClick.value = false;
+    isYellowClick.value = false;
+    isGreenClick.value = false;
+    isGreyClick.value = false;
+    isBlueClick.value = false;
+    isOrangeClick.value = false;
+  }
+
+  //Selection of purple
+  void selectionOfPurple() {
+    isPurpleClick.value = true;
+    selectedColor.value = AppColors.purple;
+    //Remaining
+    isRedClick.value = false;
+    isPinkClick.value = false;
+    isYellowClick.value = false;
+    isGreenClick.value = false;
+    isGreyClick.value = false;
+    isBlueClick.value = false;
+    isOrangeClick.value = false;
+  }
+
+  //Selection of Yellow
+  void selectionOfYellow() {
+    isYellowClick.value = true;
+    selectedColor.value = AppColors.yellow;
+    //Remaining
+    isRedClick.value = false;
+    isPinkClick.value = false;
+    isPurpleClick.value = false;
+    isGreenClick.value = false;
+    isGreyClick.value = false;
+    isBlueClick.value = false;
+    isOrangeClick.value = false;
+  }
+
+  //Selection of Green
+  void selectionOfGreen() {
+    isGreenClick.value = true;
+    selectedColor.value = AppColors.green;
+    //Remaining
+    isRedClick.value = false;
+    isPinkClick.value = false;
+    isPurpleClick.value = false;
+    isYellowClick.value = false;
+    isGreyClick.value = false;
+    isBlueClick.value = false;
+    isOrangeClick.value = false;
+  }
+
+  //Selection of Grey
+  void selectionOfGrey() {
+    isGreyClick.value = true;
+    selectedColor.value = AppColors.blueGrey;
+    //Remaining
+    isRedClick.value = false;
+    isPinkClick.value = false;
+    isPurpleClick.value = false;
+    isYellowClick.value = false;
+    isGreenClick.value = false;
+    isBlueClick.value = false;
+    isOrangeClick.value = false;
+  }
+
+  //Selection of Grey
+  void selectionOfBlue() {
+    isBlueClick.value = true;
+    selectedColor.value = AppColors.selectBlue;
+    //Remaining
+    isRedClick.value = false;
+    isPinkClick.value = false;
+    isPurpleClick.value = false;
+    isYellowClick.value = false;
+    isGreenClick.value = false;
+    isGreyClick.value = false;
+    isOrangeClick.value = false;
+  }
+
+  //Selection of Grey
+  void selectionOfOrange() {
+    isOrangeClick.value = true;
+    selectedColor.value = AppColors.orange;
+    //Remaining
+    isRedClick.value = false;
+    isPinkClick.value = false;
+    isPurpleClick.value = false;
+    isYellowClick.value = false;
+    isGreenClick.value = false;
+    isGreyClick.value = false;
+    isBlueClick.value = false;
+  }
+
+  //Common Continue for Initial
+  void initialContinueClick() {
+    if (continueCount.value == 0) {
+      if (!forInitialCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 1) {
+      if (!forSummaryCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 2) {
+      if (!forJobCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value == 3) {
+      if (!forEducationCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value == 4) {
+      if (!forProjectCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 5) {
+      if (!forSkillCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 6) {
+      if (!forLangCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value == 7) {
+      if (!forSocialCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value > 7) {
+      isFinalSubmit.value = true;
+    }
+  }
+
+  //Common Continue For First Template
+  void firstContinueClick() {
+    if (continueCount.value == 0) {
+      if (!forInitialCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 1) {
+      if (!forSummaryCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 2) {
+      if (!forSkillCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 3) {
+      if (!forJobCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value == 4) {
+      if (!forEducationCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value == 5) {
+      if (!forProjectCount()) return;
+      continueCount.value++;
+      return;
+    }
+
+    if (continueCount.value == 6) {
+      if (!forLangCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value == 7) {
+      if (!forSocialCount()) return;
+      continueCount.value++;
+    }
+
+    if (continueCount.value > 7) {
+      isFinalSubmit.value = true;
+    }
+  }
+}

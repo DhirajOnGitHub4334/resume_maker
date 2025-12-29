@@ -1,0 +1,39 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "resumemaker-a298f",
+          "appId": "1:781128513492:android:6b50ad159c8c40f9b58841",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "resumemaker-a298f",
+          "configurations": {
+            "android": "1:781128513492:android:6b50ad159c8c40f9b58841",
+            "ios": "1:781128513492:ios:4976b5c92e6d4ed6b58841",
+            "macos": "1:781128513492:ios:4976b5c92e6d4ed6b58841",
+            "web": "1:781128513492:web:57fbdefafc2bb219b58841",
+            "windows": "1:781128513492:web:40585d72f86da35fb58841"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
